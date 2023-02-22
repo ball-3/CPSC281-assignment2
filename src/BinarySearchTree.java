@@ -128,37 +128,28 @@ public String toString()
 {
     if (root == null)
     {
-        return "empty tree";
+        return "";
     }
 
     Node working = root;
-    do
-    {
-        while (working.leftChild != null)
-        {
-            s.append(working.data.toString());
-            s.append(" ");
-            System.out.println(working.data.toString());
-            working = working.leftChild;
-        }
-        while (working.rightChild != null)
-        {
-            s.append(working.data.toString());
-            s.append(" ");
-            System.out.println(working.data.toString());
+    //s.append(root.data.toString());
+    //s.append(" ");
 
-            if (working.leftChild == null)
-            {
-                working = working.rightChild;
-            }
-            else
-            {
-                working = working.leftChild;
-            }
-        }
-    } while (working.leftChild != null || working.rightChild != null);
+    if (working.leftChild != null)
+    {
+
+    }
 
     return s.toString();
+}
+
+private String toString(Node start)
+{
+    Node working = start;
+    s.append(start.data.toString());
+    s.append(" ");
+
+    return "";
 }
 
 }
