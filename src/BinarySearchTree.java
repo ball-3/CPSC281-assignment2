@@ -58,6 +58,38 @@ public void insert(T data)
     //does not insert if data is repeated
 }
 
+private void insertSubtree(Node start)
+{
+    insert((T) start.data);
+    Node lchild = start.leftChild;
+    Node rchild = start.rightChild;
+    if (lchild != null)
+    {
+        insertSubtree(lchild);
+    }
+    if (rchild != null)
+    {
+        insertSubtree(rchild);
+    }
+}
+
+private Node successor(Node node, Node parent)
+{
+    Node lchild = node.leftChild;
+    while (lchild != null)
+    {
+        parent = node;
+        node = lchild;
+        lchild = node.leftChild;
+    }
+    if (node.rightChild != null)
+    {
+        insertSubtree(node.rightChild);
+    }
+    parent.leftChild = null;
+    return node;
+}
+
 private void deleteTraversal(T data, Node start, Node parent)
 {
     Node lchild = start.leftChild;
@@ -92,24 +124,35 @@ private void deleteNode(Node node, Node parent)
 
     if (parent == null)
     {
-        root = null;
+        Node successor = successor(root.rightChild, root);
+
+        successor.leftChild = root.leftChild;
+
+        if (successor.rightChild == null)
+        {
+            successor.rightChild = root.rightChild;
+            root = successor;
+
+            return;
+        }
+
+        Node srchild = successor.rightChild;
+        successor.rightChild = root.rightChild;
+
+        root = successor;
+        insertSubtree(srchild);
+        return;
     }
 
     if (parent.leftChild == node)
     {
-        if (lchild == null && rchild == null)
-        {
-            node.data = null;
-            parent.leftChild = null;
-            return;
-        }
-        if (lchild == null && rchild != null)
+        if (lchild == null)
         {
             node.data = null;
             parent.leftChild = rchild;
             return;
         }
-        if (lchild != null && rchild == null)
+        if (rchild == null)
         {
             node.data = null;
             parent.leftChild = lchild;
@@ -117,28 +160,20 @@ private void deleteNode(Node node, Node parent)
         }
         //both children are not null:
         {
-            //rewrite all of this :D
-            node.data = null;
-            parent.leftChild = lchild;
+            node.data = successor(node.rightChild, node).data;
             return;
         }
     }
 
     if (parent.rightChild == node)
     {
-        if (lchild == null && rchild == null)
-        {
-            node.data = null;
-            parent.rightChild = null;
-            return;
-        }
-        if (lchild == null && rchild != null)
+        if (lchild == null)
         {
             node.data = null;
             parent.rightChild = rchild;
             return;
         }
-        if (lchild != null && rchild == null)
+        if (rchild == null)
         {
             node.data = null;
             parent.rightChild = lchild;
@@ -146,9 +181,7 @@ private void deleteNode(Node node, Node parent)
         }
         //both children are not null:
         {
-            //rewrite all of this :D
-            node.data = null;
-            parent.rightChild = lchild;
+            node.data = successor(node, parent).data;
             return;
         }
     }
@@ -197,37 +230,37 @@ public boolean contains(T data)
     return true;
 }
 
-public String toString()
-{
-    if (root == null)
+    public String toString()
     {
-        return "";
-    }
+        if (root == null)
+        {
+            return "";
+        }
 
-    s = new StringBuilder(100);
-    s.append(root.data);
-    s.append(" ");
-    toString(root);
-
-    return s.toString();
-}
-
-private void toString(Node start)
-{
-    Node lchild = start.leftChild;
-    Node rchild = start.rightChild;
-    if (lchild != null)
-    {
-        s.append(lchild.data);
+        s = new StringBuilder(100);
+        s.append(root.data);
         s.append(" ");
-        toString(lchild);
+        toString(root);
+
+        return s.toString();
     }
-    if (rchild != null)
+
+    private void toString(Node start)
     {
-        s.append(rchild.data);
-        s.append(" ");
-        toString(rchild);
+        Node lchild = start.leftChild;
+        Node rchild = start.rightChild;
+        if (lchild != null)
+        {
+            s.append(lchild.data);
+            s.append(" ");
+            toString(lchild);
+        }
+        if (rchild != null)
+        {
+            s.append(rchild.data);
+            s.append(" ");
+            toString(rchild);
+        }
     }
-}
 
 }
