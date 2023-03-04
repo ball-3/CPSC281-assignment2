@@ -18,7 +18,6 @@ private StringBuilder s;
 public BinarySearchTree()
 {
     root = null;
-    s = new StringBuilder(100);
 }
 
 public void insert(T data)
@@ -59,6 +58,102 @@ public void insert(T data)
     //does not insert if data is repeated
 }
 
+private void deleteTraversal(T data, Node start, Node parent)
+{
+    Node lchild = start.leftChild;
+    Node rchild = start.rightChild;
+
+    if (lchild != null)
+    {
+        if ((start.data).compareTo(data) > 0)   //start.data > data
+        {
+            deleteTraversal(data, lchild, start);
+            return;
+        }
+    }
+    if (rchild != null)
+    {
+        if ((start.data).compareTo(data) < 0)   //start.data < data
+        {
+            deleteTraversal(data, rchild, start);
+            return;
+        }
+    }
+    if ((start.data).compareTo(data) == 0)
+    {
+        deleteNode(start,parent);
+    }
+}
+
+private void deleteNode(Node node, Node parent)
+{
+    Node lchild = node.leftChild;
+    Node rchild = node.rightChild;
+
+    if (parent == null)
+    {
+        root = null;
+    }
+
+    if (parent.leftChild == node)
+    {
+        if (lchild == null && rchild == null)
+        {
+            node.data = null;
+            parent.leftChild = null;
+            return;
+        }
+        if (lchild == null && rchild != null)
+        {
+            node.data = null;
+            parent.leftChild = rchild;
+            return;
+        }
+        if (lchild != null && rchild == null)
+        {
+            node.data = null;
+            parent.leftChild = lchild;
+            return;
+        }
+        //both children are not null:
+        {
+            //rewrite all of this :D
+            node.data = null;
+            parent.leftChild = lchild;
+            return;
+        }
+    }
+
+    if (parent.rightChild == node)
+    {
+        if (lchild == null && rchild == null)
+        {
+            node.data = null;
+            parent.rightChild = null;
+            return;
+        }
+        if (lchild == null && rchild != null)
+        {
+            node.data = null;
+            parent.rightChild = rchild;
+            return;
+        }
+        if (lchild != null && rchild == null)
+        {
+            node.data = null;
+            parent.rightChild = lchild;
+            return;
+        }
+        //both children are not null:
+        {
+            //rewrite all of this :D
+            node.data = null;
+            parent.rightChild = lchild;
+            return;
+        }
+    }
+}
+
 public void delete(T data)
 {
     if (root == null)
@@ -66,31 +161,9 @@ public void delete(T data)
         return; //nothing has been deleted because the tree is empty
     }
 
+    Node working = root;
+    deleteTraversal(data, root, null);
 
-    // :(
-    Node parent = root;
-    Node working;
-    while ((parent.data).compareTo(data) != 0)
-    {
-        while ((parent.data).compareTo(data) < 0)   //parent.data < data
-        {
-            if (parent.rightChild == null)
-            {
-                return; //element does not exist so nothing is deleted
-            }
-            parent = parent.rightChild;
-        }
-
-        while ((parent.data).compareTo(data) > 0)   //parent.data > data
-        {
-            if (parent.leftChild == null)
-            {
-                return; //element does not exist so nothing is deleted
-            }
-            parent = parent.leftChild;
-        }
-    }
-    //delete "parent"
 }
 
 public boolean contains(T data)
@@ -131,25 +204,30 @@ public String toString()
         return "";
     }
 
-    Node working = root;
-    //s.append(root.data.toString());
-    //s.append(" ");
-
-    if (working.leftChild != null)
-    {
-
-    }
+    s = new StringBuilder(100);
+    s.append(root.data);
+    s.append(" ");
+    toString(root);
 
     return s.toString();
 }
 
-private String toString(Node start)
+private void toString(Node start)
 {
-    Node working = start;
-    s.append(start.data.toString());
-    s.append(" ");
-
-    return "";
+    Node lchild = start.leftChild;
+    Node rchild = start.rightChild;
+    if (lchild != null)
+    {
+        s.append(lchild.data);
+        s.append(" ");
+        toString(lchild);
+    }
+    if (rchild != null)
+    {
+        s.append(rchild.data);
+        s.append(" ");
+        toString(rchild);
+    }
 }
 
 }
