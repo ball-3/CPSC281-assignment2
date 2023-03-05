@@ -122,7 +122,7 @@ public class AVLTree<T extends Comparable <T>> {
                 return;
             }
             {
-                lrRotation(toRotate.leftChild, toRotate);
+                //lrRotation(toRotate.leftChild, toRotate);
                 //return;
             }
         }
@@ -132,12 +132,13 @@ public class AVLTree<T extends Comparable <T>> {
     {
         Node b = base.leftChild;
         Node br = b.rightChild;
-        Node ar = base.rightChild;
 
         b.rightChild = base;
+        b.rheight = Math.max(base.rheight, base.lheight) + 1;
         base.leftChild = br;
-        base.rightChild = ar;
+        base.lheight = (br != null) ? (Math.max(br.rheight, br.lheight) + 1) : 0;
 
+        System.out.println("ll rotation at " + base.data);
         rotationFixParents(b,base,parent);
     }
 
@@ -155,6 +156,7 @@ public class AVLTree<T extends Comparable <T>> {
         base.leftChild = cr;
         base.rightChild = ar;
 
+        System.out.println("lr rotation");
         rotationFixParents(c,base,parent);
     }
 
@@ -165,9 +167,11 @@ public class AVLTree<T extends Comparable <T>> {
         Node bl = base.leftChild;
 
         b.leftChild = base;
-        b.leftChild = br;
+        b.lheight = Math.max(base.lheight, base.rheight) +1;
         base.rightChild = bl;
+        base.rheight = (br != null) ? (Math.max(bl.rheight, bl.lheight) + 1) : 0;
 
+        System.out.println("rr rotation at " + base.data);
         rotationFixParents(b,base,parent);
     }
 
@@ -185,6 +189,7 @@ public class AVLTree<T extends Comparable <T>> {
         b.leftChild = cr;
         base.rightChild = cl;
 
+        System.out.println("rl rotation");
         rotationFixParents(c,base,parent);
     }
 
@@ -513,7 +518,46 @@ public class AVLTree<T extends Comparable <T>> {
 
     public String printTree()
     {
-       return ";";
+        if (root == null)
+        {
+            return "";
+        }
+
+        s = new StringBuilder(100);
+        s.append(root.data);
+        s.append("(" + root.lheight +","+root.rheight+")");
+        s.append(" ");
+        details(root);
+
+        return s.toString();
+    }
+
+    private void details(Node start)
+    {
+        Node lchild = start.leftChild;
+        Node rchild = start.rightChild;
+        if (lchild != null)
+        {
+            s.append(lchild.data);
+            s.append("(l," + lchild.lheight +","+lchild.rheight+")");
+            if (lchild.leftChild != null)
+                s.append("[l " + lchild.leftChild.data +"]" );
+            if (lchild.rightChild != null)
+                s.append("[r " +lchild.rightChild.data+"]");
+            s.append(" ");
+            details(lchild);
+        }
+        if (rchild != null)
+        {
+            s.append(rchild.data);
+            s.append("(r," + rchild.lheight +","+rchild.rheight+")");
+            if (rchild.leftChild != null)
+                s.append("[l " + rchild.leftChild.data +"]" );
+            if (rchild.rightChild != null)
+                s.append("[r " +rchild.rightChild.data+"]");
+            s.append(" ");
+            details(rchild);
+        }
     }
 
     //testing TODO delete

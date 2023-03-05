@@ -56,9 +56,10 @@ public class Main {
         tree.insert(24);
         tree.insert(33);
         tree.insert(32);
-        tree.insert(34);
+        //tree.insert(34);
 
         System.out.println(tree);
+        System.out.println(tree.printTree());
         //System.out.println(tree.contains(22));
         //tree.delete(22);
         //System.out.println(tree.contains(22));
