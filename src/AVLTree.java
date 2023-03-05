@@ -5,6 +5,8 @@ public class AVLTree<T extends Comparable <T>> {
         T data;
         Node leftChild;
         Node rightChild;
+        int lheight = -1;
+        int rheight = -1;
 
         public Node(T data)
         {
@@ -14,15 +16,14 @@ public class AVLTree<T extends Comparable <T>> {
 
     private Node<T> root;
     private StringBuilder s;
-    private int bf;
 
     public AVLTree()
     {
         root = null;
-        bf = 0;
     }
 
-    private void bstInsert(T data)
+    //simplify
+    public void insert(T data)
     {
         Node newNode = new Node(data);
 
@@ -33,47 +34,158 @@ public class AVLTree<T extends Comparable <T>> {
         }
 
         Node parent = root;
+        Node toRotate = null;
+
         while ((parent.data).compareTo(data) != 0)
         {
             while ((parent.data).compareTo(data) < 0)   //parent.data < data
             {
+                parent.rheight++;
+                if (parent.rheight - parent.lheight > 1 || parent.rheight - parent.lheight < -1)
+                {
+                    toRotate = parent;
+                }
                 if (parent.rightChild == null)
                 {
                     parent.rightChild = newNode;
+                    insertionRotation(toRotate);
                     return;
-                    //put newNode as the rightChild here
                 }
                 parent = parent.rightChild;
             }
 
             while ((parent.data).compareTo(data) > 0)   //parent.data > data
             {
+                parent.lheight++;
                 if (parent.leftChild == null)
                 {
                     parent.leftChild = newNode;
                     return;
-                    //put newNode as the leftChild here
                 }
                 parent = parent.leftChild;
             }
         }
-        //does not insert if data is repeated
+        //if data is repeated, decrement heights:
+        while ((parent.data).compareTo(data) != 0)
+        {
+            while ((parent.data).compareTo(data) < 0)   //parent.data < data
+            {
+                parent.rheight--;
+                if (parent.rightChild == null)
+                {
+                    return;
+                }
+                parent = parent.rightChild;
+            }
+
+            while ((parent.data).compareTo(data) > 0)   //parent.data > data
+            {
+                parent.lheight--;
+                if (parent.leftChild == null)
+                {
+                    return;
+                }
+                parent = parent.leftChild;
+            }
+        }
     }
 
-    //this is just bst insert so far :(
-    public void insert(T data)
+    private void insertionRotation(Node toRotate)
     {
-        bstInsert(data);
-        findBF();
-        if (bf == 0 || bf == 1 || bf == -1) {return;}
+        if (toRotate == null)
+        {
+            return;
+        }
+
+        int bf = toRotate.rheight - toRotate.lheight;
+
         if (bf > 1)
         {
-
+            int rbf = toRotate.rightChild.rheight - toRotate.rightChild.lheight;
+            if (rbf >= 0)
+            {
+                rrRotation(toRotate.rightChild, toRotate);
+                return;
+            }
+            {
+                rlRotation(toRotate.rightChild, toRotate);
+                return;
+            }
         }
+
         if (bf < 1)
         {
-
+            int lbf = toRotate.leftChild.rheight - toRotate.leftChild.lheight;
+            if (lbf <= 0)
+            {
+                llRotation(toRotate.leftChild, toRotate);
+                return;
+            }
+            {
+                lrRotation(toRotate.leftChild, toRotate);
+                //return;
+            }
         }
+    }
+
+    private void llRotation(Node base, Node parent)
+    {
+        Node b = base.leftChild;
+        Node br = b.rightChild;
+        Node ar = base.rightChild;
+
+        b.rightChild = base;
+        base.leftChild = br;
+        base.rightChild = ar;
+
+        rotationFixParents(b,base,parent);
+    }
+
+    private void lrRotation(Node base, Node parent)
+    {
+        Node b = base.leftChild;
+        Node ar = base.rightChild;
+        Node c = b.rightChild;
+        Node cl = c.leftChild;
+        Node cr = c.rightChild;
+
+        c.leftChild = b;
+        c.rightChild = base;
+        b.rightChild = cl;
+        base.leftChild = cr;
+        base.rightChild = ar;
+
+        rotationFixParents(c,base,parent);
+    }
+
+    private void rrRotation(Node base, Node parent)
+    {
+        Node b = base.rightChild;
+        Node br = b.rightChild;
+        Node bl = base.leftChild;
+
+        b.leftChild = base;
+        b.leftChild = br;
+        base.rightChild = bl;
+
+        rotationFixParents(b,base,parent);
+    }
+
+    private void rlRotation(Node base, Node parent)
+    {
+        Node b = base.rightChild;
+        Node c = b.leftChild;
+        Node br = b.rightChild;
+        Node cl = c.leftChild;
+        Node cr = c.rightChild;
+
+        c.leftChild = base;
+        c.rightChild = b;
+        b.rightChild = br;
+        b.leftChild = cr;
+        base.rightChild = cl;
+
+        rotationFixParents(c,base,parent);
     }
 
     private void insertSubtree(Node start)
@@ -91,48 +203,14 @@ public class AVLTree<T extends Comparable <T>> {
         }
     }
 
-    private Node successor(Node node, Node parent)
+    public void delete(T data)
     {
-        Node lchild = node.leftChild;
-        while (lchild != null)
-        {
-            parent = node;
-            node = lchild;
-            lchild = node.leftChild;
+        if (root == null) {
+            return; //nothing has been deleted because the tree is empty
         }
-        if (node.rightChild != null)
-        {
-            insertSubtree(node.rightChild);
-        }
-        parent.leftChild = null;
-        return node;
-    }
 
-    private void deleteTraversal(T data, Node start, Node parent)
-    {
-        Node lchild = start.leftChild;
-        Node rchild = start.rightChild;
+        deleteTraversal(data, root, null, null);
 
-        if (lchild != null)
-        {
-            if ((start.data).compareTo(data) > 0)   //start.data > data
-            {
-                deleteTraversal(data, lchild, start);
-                return;
-            }
-        }
-        if (rchild != null)
-        {
-            if ((start.data).compareTo(data) < 0)   //start.data < data
-            {
-                deleteTraversal(data, rchild, start);
-                return;
-            }
-        }
-        if ((start.data).compareTo(data) == 0)
-        {
-            deleteNode(start,parent);
-        }
     }
 
     private void deleteNode(Node node, Node parent)
@@ -205,17 +283,170 @@ public class AVLTree<T extends Comparable <T>> {
         }
     }
 
-    public void delete(T data) {
-        if (root == null) {
-            return; //nothing has been deleted because the tree is empty
+    private Node successor(Node node, Node parent)
+    {
+        Node lchild = node.leftChild;
+        while (lchild != null)
+        {
+            parent = node;
+            node = lchild;
+            lchild = node.leftChild;
         }
-
-        Node working = root;
-        deleteTraversal(data, root, null);
-
+        if (node.rightChild != null)
+        {
+            insertSubtree(node.rightChild);
+        }
+        parent.leftChild = null;
+        return node;
     }
 
-    //bst contains but should be the same ?
+    private void deleteTraversal(T data, Node start, Node parent, Node toRotate)
+    {
+        Node lchild = start.leftChild;
+        Node rchild = start.rightChild;
+
+        if (lchild != null)
+        {
+            if ((start.data).compareTo(data) > 0)   //start.data > data
+            {
+                start.lheight--;
+                if (start.rheight - start.lheight > 1 || start.rheight - start.lheight < -1)
+                {
+                    toRotate = start;
+                }
+                deleteTraversal(data, lchild, start, toRotate);
+                return;
+            }
+        }
+        if (rchild != null)
+        {
+            if ((start.data).compareTo(data) < 0)   //start.data < data
+            {
+                start.rheight--;
+                if (start.rheight - start.lheight > 1 || start.rheight - start.lheight < -1)
+                {
+                    toRotate = start;
+                }
+                deleteTraversal(data, rchild, start, toRotate);
+                return;
+            }
+        }
+        if ((start.data).compareTo(data) == 0)
+        {
+            deleteNode(start,parent);
+            deleteRotation(toRotate, parent);
+        }
+    }
+
+    private void deleteRotation(Node toRotate, Node parent)
+    {
+        if (toRotate == null)
+        {
+            return;
+        }
+
+        int bf = toRotate.rheight - toRotate.lheight;
+
+        if (bf > 1)
+        {
+            int lbf = toRotate.rightChild.rheight - toRotate.rightChild.lheight;
+            if (lbf < 0)
+            {
+                rMinusOneRotation(toRotate, parent);
+                return;
+            }
+            {
+                rORotation(toRotate, parent);
+                return;
+            }
+        }
+
+        if (bf < 1)
+        {
+            int rbf = toRotate.leftChild.rheight - toRotate.leftChild.lheight;
+            if (rbf < 0)
+            {
+                lMinusOneRotation(toRotate, parent);
+                return;
+            }
+            {
+                lORotation(toRotate, parent);
+                //return;
+            }
+        }
+    }
+
+    private void lORotation(Node base, Node parent)
+    {
+        Node b = base.rightChild;
+        Node br = b.leftChild;
+
+        b.leftChild = base;
+        base.rightChild = br;
+
+        rotationFixParents(b, base, parent);
+    }
+
+    private void rORotation(Node base, Node parent)
+    {
+        Node b = base.leftChild;
+        Node br = b.rightChild;
+
+        b.rightChild = base;
+        base.leftChild = br;
+
+        rotationFixParents(b, base, parent);
+    }
+
+    private void rMinusOneRotation(Node base, Node parent)
+    {
+        Node b = base.leftChild;
+        Node c = b.rightChild;
+        Node cl = c.leftChild;
+        Node cr = c.rightChild;
+        
+        c.leftChild = b;
+        c.rightChild = base;
+        base.leftChild = cr;
+        b.rightChild = cl;
+
+        rotationFixParents(c, base, parent);
+    }
+    
+    private void lMinusOneRotation(Node base, Node parent)
+    {
+        Node b = base.rightChild;
+        Node c = b.leftChild;
+        Node cl = c.rightChild;
+        Node cr = c.leftChild;
+
+        c.rightChild = b;
+        c.leftChild = base;
+        base.rightChild = cr;
+        b.leftChild = cl;
+
+        rotationFixParents(c, base, parent);
+    }
+
+    private void rotationFixParents(Node b, Node base, Node parent)
+    {
+        if (parent == null)
+        {
+            root = b;
+            return;
+        }
+        if (parent.leftChild == base)
+        {
+            parent.leftChild = b;
+            return;
+        }
+        if (parent.rightChild == base)
+        {
+            parent.rightChild = b;
+            //return;
+        }
+    }
+
     public boolean contains(T data)
     {
         if (root == null)
@@ -280,16 +511,12 @@ public class AVLTree<T extends Comparable <T>> {
         }
     }
 
-    private void findBF()
+    public String printTree()
     {
-        findBF(root);
+       return ";";
     }
 
-    private void findBF(Node start)
-    {
-        bf = rightHeight(start) - leftHeight(start);
-    }
-
+    //testing TODO delete
     private int leftHeight(Node start)
     {
         Node lchild = start.leftChild;
@@ -300,6 +527,7 @@ public class AVLTree<T extends Comparable <T>> {
         return Math.max(leftHeight(lchild), rightHeight(lchild)) + 1;
     }
 
+    //testing TODO delete
     private int rightHeight(Node start)
     {
         Node rchild = start.rightChild;
@@ -309,10 +537,4 @@ public class AVLTree<T extends Comparable <T>> {
         }
         return Math.max(leftHeight(rchild), rightHeight(rchild)) + 1;
     }
-    public int getBf()
-    {
-        findBF();
-        return bf;
-    }
-
 }

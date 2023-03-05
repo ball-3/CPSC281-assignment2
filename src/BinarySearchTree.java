@@ -39,7 +39,6 @@ public void insert(T data)
             {
                 parent.rightChild = newNode;
                 return;
-                //put newNode as the rightChild here
             }
             parent = parent.rightChild;
         }
@@ -50,7 +49,6 @@ public void insert(T data)
             {
                 parent.leftChild = newNode;
                 return;
-                //put newNode as the leftChild here
             }
             parent = parent.leftChild;
         }
@@ -191,12 +189,10 @@ public void delete(T data)
 {
     if (root == null)
     {
-        return; //nothing has been deleted because the tree is empty
+        return;
     }
 
-    Node working = root;
     deleteTraversal(data, root, null);
-
 }
 
 public boolean contains(T data)
@@ -230,37 +226,37 @@ public boolean contains(T data)
     return true;
 }
 
-    public String toString()
+public String toString()
+{
+    if (root == null)
     {
-        if (root == null)
-        {
-            return "";
-        }
+        return "";
+    }
 
-        s = new StringBuilder(100);
-        s.append(root.data);
+    s = new StringBuilder(100);
+    s.append(root.data);
+    s.append(" ");
+    toString(root);
+
+    return s.toString();
+}
+
+private void toString(Node start)
+{
+    Node lchild = start.leftChild;
+    Node rchild = start.rightChild;
+    if (lchild != null)
+    {
+        s.append(lchild.data);
         s.append(" ");
-        toString(root);
-
-        return s.toString();
+        toString(lchild);
     }
-
-    private void toString(Node start)
+    if (rchild != null)
     {
-        Node lchild = start.leftChild;
-        Node rchild = start.rightChild;
-        if (lchild != null)
-        {
-            s.append(lchild.data);
-            s.append(" ");
-            toString(lchild);
-        }
-        if (rchild != null)
-        {
-            s.append(rchild.data);
-            s.append(" ");
-            toString(rchild);
-        }
+        s.append(rchild.data);
+        s.append(" ");
+        toString(rchild);
     }
+}
 
 }
