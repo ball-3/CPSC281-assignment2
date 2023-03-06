@@ -1,8 +1,15 @@
 public class AVLTree<T extends Comparable <T>> {
 
+    /**
+     * Significant differences from BST, including addition of parent node, due to difficulties with implementation.
+     * Using balance factor = height(rightSubtree) - height(leftSubtree), meaning balance factor values are reversed
+     * when compared to the notes.
+     * @param <T>
+     */
     public static class Node<T extends Comparable<T>>
     {
         T data;
+        Node parent;
         Node leftChild;
         Node rightChild;
         int lheight = -1;
@@ -15,297 +22,97 @@ public class AVLTree<T extends Comparable <T>> {
     }
 
     private Node<T> root;
+    private Node<T> parentOfRoot;
     private StringBuilder s;
+    //used to hold node dispaced during deletion of node with single right child (see successor(Node d))
+    private Node<T> temp;
 
     public AVLTree()
     {
         root = null;
     }
 
-    //simplify
+    /**
+     * AVL insert, including rebalancing.
+     * @param data to be inserted
+     */
     public void insert(T data)
+    {
+        bstInsert(data);
+        updateHeights(root);
+        Node a = nodeA(root);
+        rotate(a);
+        //for printing purposes:
+        updateHeights(root);
+    }
+
+    /**
+     * BST implementation of insert.
+     * @param data to be inserted
+     */
+    private void bstInsert(T data)
     {
         Node newNode = new Node(data);
 
         if (root == null)
         {
+            newNode.parent = parentOfRoot;
             root = newNode;
             return;
         }
 
-        Node parent = root;
-        Node toRotate = null;
-
-        while ((parent.data).compareTo(data) != 0)
+        Node current = root;
+        while ((current.data).compareTo(data) != 0)
         {
-            while ((parent.data).compareTo(data) < 0)   //parent.data < data
+            while ((current.data).compareTo(data) < 0)   //current.data < data
             {
-                parent.rheight++;
-                if (parent.rheight - parent.lheight > 1 || parent.rheight - parent.lheight < -1)
+                if (current.rightChild == null)
                 {
-                    toRotate = parent;
-                }
-                if (parent.rightChild == null)
-                {
-                    parent.rightChild = newNode;
-                    insertionRotation(toRotate);
+                    current.rightChild = newNode;
+                    newNode.parent = current;
                     return;
                 }
-                parent = parent.rightChild;
+                current = current.rightChild;
             }
 
-            while ((parent.data).compareTo(data) > 0)   //parent.data > data
+            while ((current.data).compareTo(data) > 0)   //current.data > data
             {
-                parent.lheight++;
-                if (parent.leftChild == null)
+                if (current.leftChild == null)
                 {
-                    parent.leftChild = newNode;
+                    current.leftChild = newNode;
+                    newNode.parent = current;
                     return;
                 }
-                parent = parent.leftChild;
+                current = current.leftChild;
             }
         }
-        //if data is repeated, decrement heights:
-        while ((parent.data).compareTo(data) != 0)
-        {
-            while ((parent.data).compareTo(data) < 0)   //parent.data < data
-            {
-                parent.rheight--;
-                if (parent.rightChild == null)
-                {
-                    return;
-                }
-                parent = parent.rightChild;
-            }
-
-            while ((parent.data).compareTo(data) > 0)   //parent.data > data
-            {
-                parent.lheight--;
-                if (parent.leftChild == null)
-                {
-                    return;
-                }
-                parent = parent.leftChild;
-            }
-        }
+        //does not insert if data is repeated
     }
 
-    private void insertionRotation(Node toRotate)
-    {
-        if (toRotate == null)
-        {
-            return;
-        }
-
-        int bf = toRotate.rheight - toRotate.lheight;
-
-        if (bf > 1)
-        {
-            int rbf = toRotate.rightChild.rheight - toRotate.rightChild.lheight;
-            if (rbf >= 0)
-            {
-                rrRotation(toRotate.rightChild, toRotate);
-                return;
-            }
-            {
-                rlRotation(toRotate.rightChild, toRotate);
-                return;
-            }
-        }
-
-        if (bf < 1)
-        {
-            int lbf = toRotate.leftChild.rheight - toRotate.leftChild.lheight;
-            if (lbf <= 0)
-            {
-                llRotation(toRotate.leftChild, toRotate);
-                return;
-            }
-            {
-                //lrRotation(toRotate.leftChild, toRotate);
-                //return;
-            }
-        }
-    }
-
-    private void llRotation(Node base, Node parent)
-    {
-        Node b = base.leftChild;
-        Node br = b.rightChild;
-
-        b.rightChild = base;
-        b.rheight = Math.max(base.rheight, base.lheight) + 1;
-        base.leftChild = br;
-        base.lheight = (br != null) ? (Math.max(br.rheight, br.lheight) + 1) : 0;
-
-        System.out.println("ll rotation at " + base.data);
-        rotationFixParents(b,base,parent);
-    }
-
-    private void lrRotation(Node base, Node parent)
-    {
-        Node b = base.leftChild;
-        Node ar = base.rightChild;
-        Node c = b.rightChild;
-        Node cl = c.leftChild;
-        Node cr = c.rightChild;
-
-        c.leftChild = b;
-        c.rightChild = base;
-        b.rightChild = cl;
-        base.leftChild = cr;
-        base.rightChild = ar;
-
-        System.out.println("lr rotation");
-        rotationFixParents(c,base,parent);
-    }
-
-    private void rrRotation(Node base, Node parent)
-    {
-        Node b = base.rightChild;
-        Node br = b.rightChild;
-        Node bl = base.leftChild;
-
-        b.leftChild = base;
-        b.lheight = Math.max(base.lheight, base.rheight) +1;
-        base.rightChild = bl;
-        base.rheight = (br != null) ? (Math.max(bl.rheight, bl.lheight) + 1) : 0;
-
-        System.out.println("rr rotation at " + base.data);
-        rotationFixParents(b,base,parent);
-    }
-
-    private void rlRotation(Node base, Node parent)
-    {
-        Node b = base.rightChild;
-        Node c = b.leftChild;
-        Node br = b.rightChild;
-        Node cl = c.leftChild;
-        Node cr = c.rightChild;
-
-        c.leftChild = base;
-        c.rightChild = b;
-        b.rightChild = br;
-        b.leftChild = cr;
-        base.rightChild = cl;
-
-        System.out.println("rl rotation");
-        rotationFixParents(c,base,parent);
-    }
-
-    private void insertSubtree(Node start)
-    {
-        insert((T) start.data);
-        Node lchild = start.leftChild;
-        Node rchild = start.rightChild;
-        if (lchild != null)
-        {
-            insertSubtree(lchild);
-        }
-        if (rchild != null)
-        {
-            insertSubtree(rchild);
-        }
-    }
-
+    /**
+     * AVL delete, including rebalancing.
+     * @param data to be deleted.
+     */
     public void delete(T data)
     {
-        if (root == null) {
-            return; //nothing has been deleted because the tree is empty
-        }
-
-        deleteTraversal(data, root, null, null);
-
-    }
-
-    private void deleteNode(Node node, Node parent)
-    {
-        Node lchild = node.leftChild;
-        Node rchild = node.rightChild;
-
-        if (parent == null)
+        deleteTraversal(data,root);
+        if (root != null)
         {
-            Node successor = successor(root.rightChild, root);
-
-            successor.leftChild = root.leftChild;
-
-            if (successor.rightChild == null)
-            {
-                successor.rightChild = root.rightChild;
-                root = successor;
-
-                return;
-            }
-
-            Node srchild = successor.rightChild;
-            successor.rightChild = root.rightChild;
-
-            root = successor;
-            insertSubtree(srchild);
-            return;
-        }
-
-        if (parent.leftChild == node)
-        {
-            if (lchild == null)
-            {
-                node.data = null;
-                parent.leftChild = rchild;
-                return;
-            }
-            if (rchild == null)
-            {
-                node.data = null;
-                parent.leftChild = lchild;
-                return;
-            }
-            //both children are not null:
-            {
-                node.data = successor(node.rightChild, node).data;
-                return;
-            }
-        }
-
-        if (parent.rightChild == node)
-        {
-            if (lchild == null)
-            {
-                node.data = null;
-                parent.rightChild = rchild;
-                return;
-            }
-            if (rchild == null)
-            {
-                node.data = null;
-                parent.rightChild = lchild;
-                return;
-            }
-            //both children are not null:
-            {
-                node.data = successor(node, parent).data;
-                return;
-            }
+            updateHeights(root);
+            Node a = nodeA(root);
+            rotate(a);
+            //for printing purposes:
+            updateHeights(root);
         }
     }
 
-    private Node successor(Node node, Node parent)
-    {
-        Node lchild = node.leftChild;
-        while (lchild != null)
-        {
-            parent = node;
-            node = lchild;
-            lchild = node.leftChild;
-        }
-        if (node.rightChild != null)
-        {
-            insertSubtree(node.rightChild);
-        }
-        parent.leftChild = null;
-        return node;
-    }
-
-    private void deleteTraversal(T data, Node start, Node parent, Node toRotate)
+    /**
+     * Traverses the tree from start until it finds data or exits the tree.
+     * If data is located, deletes the Node containing the data.
+     * @param data to be removed
+     * @param start root of subtree to search
+     */
+    private void deleteTraversal(T data, Node start)
     {
         Node lchild = start.leftChild;
         Node rchild = start.rightChild;
@@ -314,12 +121,7 @@ public class AVLTree<T extends Comparable <T>> {
         {
             if ((start.data).compareTo(data) > 0)   //start.data > data
             {
-                start.lheight--;
-                if (start.rheight - start.lheight > 1 || start.rheight - start.lheight < -1)
-                {
-                    toRotate = start;
-                }
-                deleteTraversal(data, lchild, start, toRotate);
+                deleteTraversal(data, lchild);
                 return;
             }
         }
@@ -327,162 +129,374 @@ public class AVLTree<T extends Comparable <T>> {
         {
             if ((start.data).compareTo(data) < 0)   //start.data < data
             {
-                start.rheight--;
-                if (start.rheight - start.lheight > 1 || start.rheight - start.lheight < -1)
-                {
-                    toRotate = start;
-                }
-                deleteTraversal(data, rchild, start, toRotate);
+                deleteTraversal(data, rchild);
                 return;
             }
         }
         if ((start.data).compareTo(data) == 0)
         {
-            deleteNode(start,parent);
-            deleteRotation(toRotate, parent);
+            deleteNode(start);
+        }
+        //else the node was not found in the tree and nothing is deleted
+    }
+
+    /**
+     * Deletes node d without rebalancing. Children of d are moved appropriately.
+     * @param d node to be deleted
+     */
+    private void deleteNode(Node d)
+    {
+        Node dl = d.leftChild;
+        Node dr = d.rightChild;
+        Node a = d.parent;
+
+        if (a == null)             //d is the root
+        {
+            if (dl == null)
+            {
+                root = dr;
+                if (dr != null) {dr.parent = null;}
+                d.rightChild = null;
+                return;
+            }
+            if (dr == null)
+            {
+                root = dl;
+                dl.parent = null;
+                d.leftChild = null;
+                return;
+            }
+            //dl and dr are not null
+            //this case does not work
+            {
+                temp = null;
+                Node successor = successor(d);
+                root = successor;
+                successor.parent = null;
+                dl.parent = successor;
+                dr.parent = successor;
+                successor.leftChild = dl;
+                successor.rightChild = dr;
+                d.parent = null;
+                d.leftChild = null;
+                d.rightChild = null;
+                if (temp != null)
+                {
+                    insert(temp.data);
+                    temp = null;
+                }
+            }
+        }
+
+        if (dl == null)
+        {
+            if (a.leftChild == d)
+            {
+                a.leftChild = dr;          //if dr is also null, this simply sets parent.leftChild to null
+                if (dr != null) {dr.parent = a;}
+                d.parent = null;
+                d.rightChild = null;
+                return;
+            }
+            if (a.rightChild == d)
+            {
+                a.rightChild = dr;
+                if (dr != null) {dr.parent = a;}
+                d.parent = null;
+                d.rightChild = null;
+                return;
+            }
+        }
+        if (dr == null)                         //here, dl is not null, as otherwise method would have returned by now
+        {
+            if (a.leftChild == d)
+            {
+                a.leftChild = dl;
+                dl.parent = a;
+                d.parent = null;
+                d.leftChild = null;
+                return;
+            }
+            if (a.rightChild == d)
+            {
+                a.rightChild = dl;
+                dl.parent = a;
+                d.parent = null;
+                d.leftChild = null;
+                return;
+            }
+        }
+        //dl and dr are not null
+        //this case does not work
+        {
+            updateHeights(d);
+            //case height(wl) and height(wr) == 0
+            //intended to fix the looping issue with successor, but this if is not entered at appropriate time
+            if (d.lheight == 0 && d.rheight == 0)
+            {
+                if (a.leftChild == d)
+                {
+                    a.leftChild = dl;
+                }
+                if (a.rightChild == d)
+                {
+                    a.rightChild = dl;
+                }
+
+                dl.rightChild = dr;
+                dl.leftChild = null;
+                dl.parent = a;
+            }
+
+            Node successor = successor(d);
+
+            if (a.leftChild == d)
+            {
+                a.leftChild = successor;
+            }
+            if (a.rightChild == d)
+            {
+                a.rightChild = successor;
+            }
+
+            temp = null;
+            successor.parent = a;
+            dl.parent = successor;
+            dr.parent = successor;
+            successor.leftChild = dl;
+            successor.rightChild = dr;
+            d.parent = null;
+            d.leftChild = null;
+            d.rightChild = null;
+            if (temp != null)
+            {
+                insert(temp.data);
+                temp = null;
+            }
         }
     }
 
-    private void deleteRotation(Node toRotate, Node parent)
+    /**
+     * Finds and returns the successor of the node to be deleted, d.
+     * @param d
+     * @return successor of d
+     */
+    private Node successor(Node d)
     {
-        if (toRotate == null)
+        Node wl = d.rightChild;
+        Node working = d;
+
+        while (wl != null)
         {
-            return;
+            working = wl;
+            wl = working.leftChild;
+        }
+        if (working.rightChild != null)
+        {
+            //because the tree is avl, rightChild should be a leaf node
+            temp = working.rightChild;
+            temp.parent = null;
+        }
+        //wl (left child of working) is null, right child of working is stored in temp to be inserted if it exists
+        working.rightChild = null;
+
+        if (working.parent.leftChild == working) {working.parent.leftChild = null;}
+        else if (working.parent.rightChild == working) {working.parent.rightChild = null;}
+
+        return working;
+    }
+
+    /**
+     * Finds and returns node 'a' to be rotated at.
+     * Returns null if no rotations are needed.
+     * @param working is the node to start search at
+     */
+    private Node nodeA(Node working) {
+
+        /*
+        if (working == null) 
+        {
+            return null;
+        }
+        */
+
+        int bf = working.rheight - working.lheight;
+        Node a;
+
+        //right subtree is greater by more than one
+        if (bf > 1)                                                                //(*)
+        {
+            //working.rightChild cannot be null, as it has height 1 or greater (from (*))
+            //therefore a will be set to null iff working.rightChild has bf {-1,0,1}
+            //when a is null (not a valid a), working (last acceptable a) is returned
+            a = nodeA(working.rightChild);
+            if (a == null)
+            {
+                return working;
+            }
+            return a;
         }
 
-        int bf = toRotate.rheight - toRotate.lheight;
+        //left subtree is greater by more than one
+        if (bf < -1)                                                              //(*)
+        {
+            //working.leftChild cannot be null, as it has height 1 or greater (from (*))
+            //therefore a will be set to null iff working.leftChild has bf {-1,0,1}
+            //when a is null (not a valid a), working (last acceptable a) is returned
+            a = nodeA(working.leftChild);
+            if (a == null)
+            {
+                return working;
+            }
+            return a;
+        }
+        //if bf is {-1,0,1}, return null (no node a because no rotations are needed)
+        return null;
+    }
 
+    /**
+     * Finds and performs applicable rotation at 'a'.
+     * If a is null, no rotation is performed.
+     * @param a node to rotate ('a' node in notes)
+     */
+    private void rotate(Node a)
+    {
+        if (a == null) {return;}
+
+        int bf = a.rheight - a.lheight;
+
+        //right subtree is greater by more than one
         if (bf > 1)
         {
-            int lbf = toRotate.rightChild.rheight - toRotate.rightChild.lheight;
-            if (lbf < 0)
+            int rbf = a.rightChild.rheight - a.rightChild.lheight;
+            if (rbf >= 0)
             {
-                rMinusOneRotation(toRotate, parent);
+                System.out.println(treeDetails());
+                rrRotation(a);
+                System.out.println(treeDetails());
                 return;
             }
             {
-                rORotation(toRotate, parent);
+                System.out.println(treeDetails());
+                rlRotation(a);
+                System.out.println(treeDetails());
                 return;
             }
         }
 
-        if (bf < 1)
+        //left subtree is greater by more than one
+        if (bf < -1)
         {
-            int rbf = toRotate.leftChild.rheight - toRotate.leftChild.lheight;
-            if (rbf < 0)
+            int lbf = a.leftChild.rheight - a.leftChild.lheight;
+            if (lbf <= 0)
             {
-                lMinusOneRotation(toRotate, parent);
+                System.out.println(treeDetails());
+                llRotation(a);
+                System.out.println(treeDetails());
                 return;
             }
             {
-                lORotation(toRotate, parent);
-                //return;
+                System.out.println(treeDetails());
+                lrRotation(a);
+                System.out.println(treeDetails());
+                return;
             }
         }
+        //if bf {-1,0,1} do nothing
     }
 
-    private void lORotation(Node base, Node parent)
+    private void llRotation(Node a)
     {
-        Node b = base.rightChild;
-        Node br = b.leftChild;
+        Node b = a.leftChild;
+        Node br = b.rightChild;          //bl may be null depending on tree structure
 
-        b.leftChild = base;
-        base.rightChild = br;
-
-        rotationFixParents(b, base, parent);
+        fixParent(a,b);
+        b.rightChild = a;
+        a.parent = b;
+        a.leftChild = br;
+        if (br != null) {br.parent = a;}
     }
 
-    private void rORotation(Node base, Node parent)
+    private void lrRotation(Node a)
     {
-        Node b = base.leftChild;
-        Node br = b.rightChild;
-
-        b.rightChild = base;
-        base.leftChild = br;
-
-        rotationFixParents(b, base, parent);
-    }
-
-    private void rMinusOneRotation(Node base, Node parent)
-    {
-        Node b = base.leftChild;
+        Node b = a.leftChild;
         Node c = b.rightChild;
-        Node cl = c.leftChild;
-        Node cr = c.rightChild;
-        
+        Node cl = c.leftChild;          //cl may be null depending on tree structure
+        Node cr = c.rightChild;         //cr may be null depending on tree structure
+
+        fixParent(a,c);
         c.leftChild = b;
-        c.rightChild = base;
-        base.leftChild = cr;
+        b.parent = c;
         b.rightChild = cl;
-
-        rotationFixParents(c, base, parent);
+        c.rightChild = a;
+        a.parent = c;
+        a.leftChild = cr;
+        if (cl != null) {cl.parent = b;}
+        if (cr != null) {cr.parent = a;}
     }
-    
-    private void lMinusOneRotation(Node base, Node parent)
+
+    private void rrRotation(Node a)
     {
-        Node b = base.rightChild;
+        Node b = a.rightChild;
+        Node bl = b.leftChild;          //bl may be null depending on tree structure
+
+        fixParent(a,b);
+        b.leftChild = a;
+        a.parent = b;
+        a.rightChild = bl;
+        if (bl != null) {bl.parent = a;}
+    }
+
+    private void rlRotation(Node a)
+    {
+        Node b = a.rightChild;
         Node c = b.leftChild;
-        Node cl = c.rightChild;
-        Node cr = c.leftChild;
+        Node cl = c.leftChild;          //cl may be null depending on tree structure
+        Node cr = c.rightChild;         //cr may be null depending on tree structure
 
+        fixParent(a,c);
+        c.leftChild = a;
+        a.parent = c;
+        a.rightChild = cl;
         c.rightChild = b;
-        c.leftChild = base;
-        base.rightChild = cr;
-        b.leftChild = cl;
-
-        rotationFixParents(c, base, parent);
+        b.parent = c;
+        b.leftChild = cr;
+        if (cl != null) {cl.parent = a;}
+        if (cr != null) {cr.parent = b;}
     }
 
-    private void rotationFixParents(Node b, Node base, Node parent)
+    /**
+     * Sets a.parent.child to b.
+     * This must be called before other moves in a rotation.
+     * @param a original child of parent(a)
+     * @param b new child of parent(a)
+     */
+    private void fixParent(Node a, Node b)
     {
+        Node parent = a.parent;
         if (parent == null)
         {
             root = b;
+            b.parent = null;
             return;
         }
-        if (parent.leftChild == base)
+        if (parent.leftChild == a)
         {
+            b.parent = parent;
             parent.leftChild = b;
             return;
         }
-        if (parent.rightChild == base)
+        if (parent.rightChild == a)
         {
+            b.parent = parent;
             parent.rightChild = b;
-            //return;
         }
     }
 
-    public boolean contains(T data)
-    {
-        if (root == null)
-        {
-            return false;
-        }
-
-        Node parent = root;
-        while ((parent.data).compareTo(data) != 0)
-        {
-            while ((parent.data).compareTo(data) < 0)   //parent.data < data
-            {
-                if (parent.rightChild == null)
-                {
-                    return false;
-                }
-                parent = parent.rightChild;
-            }
-
-            while ((parent.data).compareTo(data) > 0)   //parent.data > data
-            {
-                if (parent.leftChild == null)
-                {
-                    return false;
-                }
-                parent = parent.leftChild;
-            }
-        }
-        return true;
-    }
-
+    /**
+     * toString as specified in the assignment.
+     * @return String containing the data of nodes, printed in pre order traversal.
+     */
     public String toString()
     {
         if (root == null)
@@ -498,6 +512,10 @@ public class AVLTree<T extends Comparable <T>> {
         return s.toString();
     }
 
+    /**
+     * Helper class for toString().
+     * @param start root of the subtree being focused on.
+     */
     private void toString(Node start)
     {
         Node lchild = start.leftChild;
@@ -516,7 +534,12 @@ public class AVLTree<T extends Comparable <T>> {
         }
     }
 
-    public String printTree()
+    /**
+     * Used for testing, returns a string containing details for the whole tree.
+     * @return String containing the following:
+     *          [Root Node Data]  ([height of left subtree],[height of right subtree]) [l [left child]][r [right child]]
+     */
+    public String treeDetails()
     {
         if (root == null)
         {
@@ -524,61 +547,93 @@ public class AVLTree<T extends Comparable <T>> {
         }
 
         s = new StringBuilder(100);
-        s.append(root.data);
-        s.append("(" + root.lheight +","+root.rheight+")");
-        s.append(" ");
+        s.append("      " + root.data);
+        s.append("  (" + root.lheight +","+root.rheight+")");
+        if (root.leftChild != null)
+            s.append(" [l " + root.leftChild.data +"]" );
+        if (root.rightChild != null)
+            s.append("[r " +root.rightChild.data+"]");
+        s.append("\n");
         details(root);
 
         return s.toString();
     }
 
+    /**
+     * Helper class for treeDetails.
+     * @param start root of the subtree being focused on.
+     */
     private void details(Node start)
     {
         Node lchild = start.leftChild;
         Node rchild = start.rightChild;
         if (lchild != null)
         {
-            s.append(lchild.data);
-            s.append("(l," + lchild.lheight +","+lchild.rheight+")");
+            s.append("      " + lchild.data);
+            s.append("  (" + lchild.lheight +","+lchild.rheight+")");
             if (lchild.leftChild != null)
-                s.append("[l " + lchild.leftChild.data +"]" );
+                s.append(" [l " + lchild.leftChild.data +"]" );
             if (lchild.rightChild != null)
                 s.append("[r " +lchild.rightChild.data+"]");
-            s.append(" ");
+            s.append("\n");
             details(lchild);
         }
         if (rchild != null)
         {
-            s.append(rchild.data);
-            s.append("(r," + rchild.lheight +","+rchild.rheight+")");
+            s.append("      " + rchild.data);
+            s.append("  (" + rchild.lheight +","+rchild.rheight+")");
             if (rchild.leftChild != null)
-                s.append("[l " + rchild.leftChild.data +"]" );
+                s.append(" [l " + rchild.leftChild.data +"]" );
             if (rchild.rightChild != null)
                 s.append("[r " +rchild.rightChild.data+"]");
-            s.append(" ");
+            s.append("\n");
             details(rchild);
         }
     }
 
-    //testing TODO delete
-    private int leftHeight(Node start)
+    /**
+     * Updates left and right height of start and all its descendants.
+     * @param start
+     */
+    private void updateHeights(Node start)
+    {
+        resetLeftHeight(start);
+        resetRightHeight(start);
+    }
+
+    /**
+     * Helper class for updateHeights.
+     * @param start
+     * @return leftHeight of start
+     */
+    private int resetLeftHeight(Node start)
     {
         Node lchild = start.leftChild;
         if (lchild == null)
         {
-            return 0;
+            start.lheight = -1;
+            return -1;
         }
-        return Math.max(leftHeight(lchild), rightHeight(lchild)) + 1;
+        int height = Math.max(resetLeftHeight(lchild), resetRightHeight(lchild)) + 1;
+        start.lheight = height;
+        return height;
     }
 
-    //testing TODO delete
-    private int rightHeight(Node start)
+    /**
+     * Helper class for updateHeights.
+     * @param start
+     * @return rightHeight of start
+     */
+    private int resetRightHeight(Node start)
     {
         Node rchild = start.rightChild;
         if (rchild == null)
         {
-            return 0;
+            start.rheight = -1;
+            return -1;
         }
-        return Math.max(leftHeight(rchild), rightHeight(rchild)) + 1;
+        int height = Math.max(resetLeftHeight(rchild), resetRightHeight(rchild)) + 1;
+        start.rheight = height;
+        return height;
     }
 }
